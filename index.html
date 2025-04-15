@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netlify Link Generator</title>
+</head>
+<body>
+  <h1>Generate Netlify Subdomain Link</h1>
+
+  <!-- Form to collect data -->
+  <form id="form">
+    <input type="file" id="image" name="image" accept="image/*" required><br><br>
+    <input type="text" id="title" name="title" placeholder="Enter title" required><br><br>
+    <textarea id="description" name="description" placeholder="Enter description" required></textarea><br><br>
+    <input type="url" id="redirectUrl" name="redirectUrl" placeholder="Enter redirect URL" required><br><br>
+    <button type="submit">Generate Link</button>
+  </form>
+
+  <div id="generatedLink"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // JavaScript Code
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const redirectUrl = document.getElementById('redirectUrl').value;
+      const imageInput = document.getElementById('image').files[0];
+
+      // Upload the image to ImgBB
+      const formData = new FormData();
+      formData.append('image', imageInput);
+
+      fetch('https://api.imgbb.com/1/upload?key=b7fd4c30c6c5080536374d58a96ba24f', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const imageUrl = data.data.url;
+
+        // Create a link based on the title
+        const generatedLink = `https://final033056.netlify.app/${title.replace(/\s+/g, '-').toLowerCase()}`;
+
+        // Display the generated link and preview
+        document.getElementById('generatedLink').innerHTML = `
+          <h2>Generated Link</h2>
+          <p>Link: <a href="${generatedLink}" target="_blank">${generatedLink}</a></p>
+          <p><strong>Title:</strong> ${title}</p>
+          <p><strong>Description:</strong> ${description}</p>
+          <p><strong>Image Preview:</strong> <img src="${imageUrl}" alt="Uploaded Image" width="200" /></p>
+          <p><strong>Redirect URL:</strong> <a href="${redirectUrl}" target="_blank">${redirectUrl}</a></p>
+        `;
+      })
+      .catch(error => {
+        console.error('Error uploading image:', error);
+      });
+    });
+
+    // Image Preview Before Upload (optional)
+    const imageInput = document.getElementById('image');
+    imageInput.addEventListener('change', function () {
+      const file = imageInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function (e) {
+        const imgPreview = document.createElement('img');
+        imgPreview.src = e.target.result;
+        imgPreview.width = 200;
+        document.getElementById('generatedLink').appendChild(imgPreview);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
