@@ -1,80 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Netlify Link Generator</title>
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px 20px; }
+    #preview img { max-width: 100%; height: auto; margin-top: 10px; }
+  </style>
+
+  <script>
+    // If the page is loaded with query params, inject Open Graph meta tags and redirect
+    const params = new URLSearchParams(window.location.search);
+    const title = params.get("title");
+    const desc = params.get("desc");
+    const image = params.get("image");
+    const redirect = params.get("redirect");
+
+    if (title || desc || image || redirect) {
+      document.write(`
+        <meta property="og:title" content="${decodeURIComponent(title)}" />
+        <meta property="og:description" content="${decodeURIComponent(desc)}" />
+        <meta property="og:image" content="${decodeURIComponent(image)}" />
+        <meta property="og:url" content="${window.location.href}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta http-equiv="refresh" content="3;url=${redirect}" />
+      `);
+    }
+  </script>
 </head>
 <body>
-  <h1>Generate Netlify Subdomain Link</h1>
 
-  <!-- Form to collect data -->
-  <form id="form">
-    <input type="file" id="image" name="image" accept="image/*" required><br><br>
-    <input type="text" id="title" name="title" placeholder="Enter title" required><br><br>
-    <textarea id="description" name="description" placeholder="Enter description" required></textarea><br><br>
-    <input type="url" id="redirectUrl" name="redirectUrl" placeholder="Enter redirect URL" required><br><br>
-    <button type="submit">Generate Link</button>
-  </form>
-
-  <div id="generatedLink"></div>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Only show this form if no query parameters -->
   <script>
-    // JavaScript Code
-    document.getElementById('form').addEventListener('submit', function (e) {
-      e.preventDefault();
+    if (!title && !desc && !image && !redirect) {
+      document.write(`
+        <h2>Generate Facebook Preview Link</h2>
+        <form id="linkForm">
+          <input type="text" id="inTitle" placeholder="Enter Title" required />
+          <textarea id="inDesc" placeholder="Enter Description" required></textarea>
+          <input type="url" id="inImage" placeholder="Enter Image URL (from ImgBB)" required />
+          <input type="url" id="inRedirect" placeholder="Enter Redirect URL" required />
+          <button type="submit">Generate Link</button>
+        </form>
+        <div id="result"></div>
+      `);
+    }
+  </script>
 
-      const title = document.getElementById('title').value;
-      const description = document.getElementById('description').value;
-      const redirectUrl = document.getElementById('redirectUrl').value;
-      const imageInput = document.getElementById('image').files[0];
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("linkForm");
+      if (!form) return;
 
-      // Upload the image to ImgBB
-      const formData = new FormData();
-      formData.append('image', imageInput);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
 
-      fetch('https://api.imgbb.com/1/upload?key=b7fd4c30c6c5080536374d58a96ba24f', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        const imageUrl = data.data.url;
+        const title = encodeURIComponent(document.getElementById("inTitle").value);
+        const desc = encodeURIComponent(document.getElementById("inDesc").value);
+        const image = encodeURIComponent(document.getElementById("inImage").value);
+        const redirect = encodeURIComponent(document.getElementById("inRedirect").value);
 
-        // Create a link based on the title
-        const generatedLink = `https://final033056.netlify.app/${title.replace(/\s+/g, '-').toLowerCase()}`;
+        const baseUrl = window.location.origin;
+        const finalUrl = `${baseUrl}/?title=${title}&desc=${desc}&image=${image}&redirect=${redirect}`;
 
-        // Display the generated link and preview
-        document.getElementById('generatedLink').innerHTML = `
-          <h2>Generated Link</h2>
-          <p>Link: <a href="${generatedLink}" target="_blank">${generatedLink}</a></p>
-          <p><strong>Title:</strong> ${title}</p>
-          <p><strong>Description:</strong> ${description}</p>
-          <p><strong>Image Preview:</strong> <img src="${imageUrl}" alt="Uploaded Image" width="200" /></p>
-          <p><strong>Redirect URL:</strong> <a href="${redirectUrl}" target="_blank">${redirectUrl}</a></p>
+        document.getElementById("result").innerHTML = `
+          <h3>Copy & Share This Link:</h3>
+          <p><a href="${finalUrl}" target="_blank">${finalUrl}</a></p>
+          <h4>Preview Image:</h4>
+          <img src="${decodeURIComponent(image)}" alt="Preview Image" />
         `;
-      })
-      .catch(error => {
-        console.error('Error uploading image:', error);
       });
     });
+  </script>
 
-    // Image Preview Before Upload (optional)
-    const imageInput = document.getElementById('image');
-    imageInput.addEventListener('change', function () {
-      const file = imageInput.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = function (e) {
-        const imgPreview = document.createElement('img');
-        imgPreview.src = e.target.result;
-        imgPreview.width = 200;
-        document.getElementById('generatedLink').appendChild(imgPreview);
-      };
-      
-      reader.readAsDataURL(file);
-    });
+  <!-- If query params exist, show redirect notice -->
+  <script>
+    if (title || desc || image || redirect) {
+      document.write(`
+        <h2>Redirecting you...</h2>
+        <p>If you are not redirected, <a href="${redirect}" target="_blank">click here</a>.</p>
+      `);
+    }
   </script>
 </body>
 </html>
